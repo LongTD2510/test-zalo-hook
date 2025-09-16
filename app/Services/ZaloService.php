@@ -28,7 +28,7 @@ class ZaloService
 
     public function __construct()
     {
-        $this->accessToken = app(ZaloAuthService::class)->getAccessToken();
+        // $this->accessToken = app(ZaloAuthService::class)->getAccessToken();
         $this->znsTemplateApiUrl = env('ZALO_ZNS_TEMPLATE_API_URL', 'https://business.openapi.zalo.me/template');
         $this->znsSendApiUrl = env('ZALO_ZNS_SEND_API_URL', 'https://business.openapi.zalo.me/message/template');
         $this->zaloAppId = env('ZALO_APP_ID');
