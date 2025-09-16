@@ -14,5 +14,6 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'test/*',
         'admin/zalo-notfication/zalo/webhook',
+        'zalo/webhook',
     ];
 }
