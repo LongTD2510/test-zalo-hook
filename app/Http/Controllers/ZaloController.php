@@ -45,6 +45,7 @@ class ZaloController extends Controller
     {
         try {
             Log::info('Zalo Webhook payload', $request->all());
+            return response()->json(['message' => 'OK'], 200);
         } catch (\Throwable $e) {
             Log::error('Webhook error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString()
