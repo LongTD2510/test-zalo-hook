@@ -43,8 +43,13 @@ class ZaloController extends Controller
 
     public function handle(Request $request)
     {
-        Log::info('Zalo Webhook', $request->all());
-        // Bắt buộc trả về 200 với JSON
-        return response()->json(['message' => 'OK !'], 200);
+        try {
+            Log::info('Zalo Webhook payload', $request->all());
+        } catch (\Throwable $e) {
+            Log::error('Webhook error: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'Internal error'], 500);
+        }
     }
 }
