@@ -127,33 +127,65 @@ class ZaloController extends Controller
             'name' => $name,
         ]);
 
+        if ($request->has('error_code') && $request->input('error_code') == -501) {
+            Log::warning("Webhook không trả info, fallback gọi user/detail", [
+                'zalo_user_id' => $zaloUserId,
+                'raw_request'  => $request->all()
+            ]);
+
+            $detail = $this->getUserDetail($zaloUserId);
+
+            if (isset($detail['data']['shared_info'])) {
+                $info  = $detail['data']['shared_info'];
+                $phone = $info['phone'] ?? null;
+                $name  = $info['name'] ?? null;
+
+                Log::info("Fallback user/detail thành công", [
+                    'zalo_user_id' => $zaloUserId,
+                    'info'         => $info,
+                    'phone'        => $phone,
+                    'name'         => $name,
+                ]);
+
+                // Xử lý lưu DB như cũ
+                // $this->saveZaloUser($zaloUserId, $phone, $name, $info);
+            } else {
+                Log::error("Fallback user/detail thất bại, không có shared_info", [
+                    'zalo_user_id' => $zaloUserId,
+                    'detail'       => $detail
+                ]);
+            }
+
+            return;
+        }
+
         // Tìm học sinh theo phone trong DB
         // $student = \App\Models\Student::where('phone', $phone)->first();
 
         //if ($student) {
-            // \App\Models\ZaloUser::updateOrCreate(
-            //     ['zalo_user_id' => $zaloUserId],
-            //     [
-            //         'student_id'   => $student->id,
-            //         'phone'        => $phone,
-            //         'display_name' => $name,
-            //         'extra_info'   => json_encode($info)
-            //     ]
-            // );
+        // \App\Models\ZaloUser::updateOrCreate(
+        //     ['zalo_user_id' => $zaloUserId],
+        //     [
+        //         'student_id'   => $student->id,
+        //         'phone'        => $phone,
+        //         'display_name' => $name,
+        //         'extra_info'   => json_encode($info)
+        //     ]
+        // );
 
-            //Log::info("Mapped zalo_user_id {$zaloUserId} to student {$student->id}");
+        //Log::info("Mapped zalo_user_id {$zaloUserId} to student {$student->id}");
         //} else {
-            // Nếu không tìm thấy học sinh thì lưu tạm
-            // \App\Models\ZaloUser::updateOrCreate(
-            //     ['zalo_user_id' => $zaloUserId],
-            //     [
-            //         'phone'        => $phone,
-            //         'display_name' => $name,
-            //         'extra_info'   => json_encode($info)
-            //     ]
-            // );
+        // Nếu không tìm thấy học sinh thì lưu tạm
+        // \App\Models\ZaloUser::updateOrCreate(
+        //     ['zalo_user_id' => $zaloUserId],
+        //     [
+        //         'phone'        => $phone,
+        //         'display_name' => $name,
+        //         'extra_info'   => json_encode($info)
+        //     ]
+        // );
 
-            //Log::warning("Không tìm thấy học sinh có phone {$phone}, lưu tạm zalo_user_id={$zaloUserId}");
+        //Log::warning("Không tìm thấy học sinh có phone {$phone}, lưu tạm zalo_user_id={$zaloUserId}");
         //}
     }
 
@@ -170,5 +202,18 @@ class ZaloController extends Controller
             'raw_request' => $request->all(),
             'message' => $message,
         ]);
+    }
+
+    public function getUserDetail($zaloUserId)
+    {
+        $accessToken = env('ZALO_OA_ACCESS_TOKEN');
+
+        $response = Http::withHeaders([
+            'access_token' => $accessToken,
+        ])->get('https://openapi.zalo.me/v3.0/oa/user/detail', [
+            'user_id' => $zaloUserId,
+        ]);
+
+        return $response->json();
     }
 }
