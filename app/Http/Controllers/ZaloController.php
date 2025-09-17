@@ -74,7 +74,7 @@ class ZaloController extends Controller
 
         // Gửi message yêu cầu chia sẻ số điện thoại
         // $this->sendRequestShareInfo($userId);
-        $this->sendVerificationLink($flowerId);
+        $this->sendRequestUserInfo($flowerId);
     }
 
     public function sendRequestUserInfo($zaloUserId)
