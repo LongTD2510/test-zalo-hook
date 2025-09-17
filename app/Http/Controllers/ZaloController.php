@@ -53,6 +53,9 @@ class ZaloController extends Controller
                 case 'user_submit_info':
                     $this->userSubmitInfo($request);
                     break;
+                case 'user_send_text':
+                    $this->userSendText($request);
+                    break;
 
                 default:
                     # code...
@@ -152,5 +155,20 @@ class ZaloController extends Controller
 
             //Log::warning("Không tìm thấy học sinh có phone {$phone}, lưu tạm zalo_user_id={$zaloUserId}");
         //}
+    }
+
+    public function userSendText($request)
+    {
+        $zaloUserId = $request->input('sender.id');
+        $text = $request->input('message.text');
+        $message = $request->input('message');
+
+        // Ghi log để debug
+        Log::info("User send text", [
+            'zalo_user_id' => $zaloUserId,
+            'text' => $text,
+            'raw_request' => $request->all(),
+            'message' => $message,
+        ]);
     }
 }
