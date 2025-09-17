@@ -118,7 +118,10 @@ class ZaloController extends Controller
         // Ghi log để debug
         Log::info("User submit info", [
             'zalo_user_id' => $zaloUserId,
-            'info' => $info
+            'info' => $info,
+            'raw_request' => $request->all(),
+            'phone' => $phone,
+            'name' => $name,
         ]);
 
         // Tìm học sinh theo phone trong DB
