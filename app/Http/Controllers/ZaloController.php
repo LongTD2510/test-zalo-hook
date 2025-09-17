@@ -93,7 +93,7 @@ class ZaloController extends Controller
                         "elements" => [[
                             "title" => "Xác thực học sinh",
                             "subtitle" => "Vui lòng chia sẻ thông tin để liên kết với tài khoản học sinh",
-                            "image_url" => "https://developers.zalo.me/web/static/zalo.png"
+                            "image_url" => "https://cover-talk.zadn.vn/b/6/7/6/2/850d4ee80d9fb77904b916fe6006d882.jpg"
                         ]]
                     ]
                 ]
