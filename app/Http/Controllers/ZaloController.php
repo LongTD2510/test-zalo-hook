@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SaveZaloTokenRequest;
 use App\Services\ZaloService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ZaloController extends Controller
@@ -44,13 +45,109 @@ class ZaloController extends Controller
     public function handle(Request $request)
     {
         try {
-            Log::info('Zalo Webhook payload', $request->all());
-            return response()->json(['message' => 'OK'], 200);
+            $event = $request->input('event_name');
+            switch ($event) {
+                case 'follow':
+                    $this->follow($request);
+                    break;
+                case 'user_submit_info':
+                    $this->userSubmitInfo($request);
+                    break;
+
+                default:
+                    # code...
+                    break;
+            }
         } catch (\Throwable $e) {
-            Log::error('Webhook error: '.$e->getMessage(), [
+            Log::error('Webhook error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             return response()->json(['error' => 'Internal error'], 500);
         }
+    }
+
+    public function follow($request)
+    {
+        $flowerId = $request->input('follower.id');
+        // Tạo record tạm trong DB
+        // ZaloUser::firstOrCreate(['zalo_user_id' => $userId]);
+
+        // Gửi message yêu cầu chia sẻ số điện thoại
+        // $this->sendRequestShareInfo($userId);
+        $this->sendVerificationLink($flowerId);
+    }
+
+    public function sendRequestUserInfo($zaloUserId)
+    {
+        $accessToken = env('ZALO_OA_ACCESS_TOKEN');
+
+        $payload = [
+            "recipient" => [
+                "user_id" => $zaloUserId
+            ],
+            "message" => [
+                "attachment" => [
+                    "type" => "template",
+                    "payload" => [
+                        "template_type" => "request_user_info",
+                        "elements" => [[
+                            "title" => "Xác thực học sinh",
+                            "subtitle" => "Vui lòng chia sẻ thông tin để liên kết với tài khoản học sinh",
+                            "image_url" => "https://developers.zalo.me/web/static/zalo.png"
+                        ]]
+                    ]
+                ]
+            ]
+        ];
+
+        $res = Http::withHeaders([
+            'access_token' => $accessToken,
+            'Content-Type' => 'application/json'
+        ])->post('https://openapi.zalo.me/v3.0/oa/message/cs', $payload);
+
+        return $res->json();
+    }
+
+    public function userSubmitInfo($request)
+    {
+        $zaloUserId = $request->input('sender.id');
+        $info = $request->input('info');
+        $phone = $info['phone'] ?? null;
+        $name  = $info['name'] ?? null;
+
+        // Ghi log để debug
+        Log::info("User submit info", [
+            'zalo_user_id' => $zaloUserId,
+            'info' => $info
+        ]);
+
+        // Tìm học sinh theo phone trong DB
+        // $student = \App\Models\Student::where('phone', $phone)->first();
+
+        //if ($student) {
+            // \App\Models\ZaloUser::updateOrCreate(
+            //     ['zalo_user_id' => $zaloUserId],
+            //     [
+            //         'student_id'   => $student->id,
+            //         'phone'        => $phone,
+            //         'display_name' => $name,
+            //         'extra_info'   => json_encode($info)
+            //     ]
+            // );
+
+            //Log::info("Mapped zalo_user_id {$zaloUserId} to student {$student->id}");
+        //} else {
+            // Nếu không tìm thấy học sinh thì lưu tạm
+            // \App\Models\ZaloUser::updateOrCreate(
+            //     ['zalo_user_id' => $zaloUserId],
+            //     [
+            //         'phone'        => $phone,
+            //         'display_name' => $name,
+            //         'extra_info'   => json_encode($info)
+            //     ]
+            // );
+
+            //Log::warning("Không tìm thấy học sinh có phone {$phone}, lưu tạm zalo_user_id={$zaloUserId}");
+        //}
     }
 }
